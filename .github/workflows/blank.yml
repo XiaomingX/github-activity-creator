@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"  # 每 10 分钟触发一次
+    - cron: "0 0 * * *"  # 每天 0:00 触发一次
 
 jobs:
   build:
