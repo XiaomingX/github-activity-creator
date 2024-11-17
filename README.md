@@ -11,11 +11,6 @@
 - 使用后：贡献图表显示丰富的活动记录
 ![alt text](after.png)
 
-## 使用方法
-1. 先创建一个空的GitHub仓库（不要初始化）
-2. 下载contribute.py脚本
-3. 运行命令：`python contribute.py --repository=git@github.com:用户名/仓库名.git`
-
 ## 主要功能
 - 自动生成过去一年的提交记录
 - 每天可以生成0-20次提交
