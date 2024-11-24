@@ -1,40 +1,40 @@
-name: CI
+name: CI  # 工作流程名称，表示持续集成（CI）
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"  # 每天 0:00 触发一次
+on:  # 触发条件
+  push:  # 当推送代码到指定分支时触发
+    branches: [ "main" ]  # 仅监控 main 分支的推送事件
+  pull_request:  # 当提交拉取请求（PR）时触发
+    branches: [ "main" ]  # 仅监控针对 main 分支的拉取请求
+  workflow_dispatch:  # 手动触发工作流
+  schedule:  # 定时触发
+    - cron: "0 0 * * *"  # 使用 cron 表达式，每天 0:00 触发一次
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build:  # 定义一个名为 build 的工作
+    runs-on: ubuntu-latest  # 指定工作运行的环境为最新版本的 Ubuntu
 
-    steps:
-      - uses: actions/checkout@v4
+    steps:  # 定义工作步骤
+      - uses: actions/checkout@v4  # 使用 GitHub 提供的 Actions，用于检出代码仓库
 
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Run a one-line script  # 第一步：运行单行脚本
+        run: echo Hello, world!  # 打印“Hello, world!”到终端
 
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
+      - name: Run a multi-line script  # 第二步：运行多行脚本
+        run: |  # 使用多行形式
+          echo Add other actions to build,  # 打印提示信息
           echo test, and deploy your project.
 
-      - name: Create timestamped .md file
+      - name: Create timestamped .md file  # 第三步：创建一个带时间戳的 .md 文件
         run: |
-          timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
-          echo "hello world" > "$timestamp.md"
+          timestamp=$(date "+%Y-%m-%d_%H-%M-%S")  # 生成当前时间的时间戳
+          echo "hello world" > "$timestamp.md"  # 创建一个以时间戳命名的文件，并写入内容“hello world”
 
-      - name: Commit and push .md file
+      - name: Commit and push .md file  # 第四步：提交并推送生成的 .md 文件到代码仓库
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用 GitHub 提供的令牌进行身份验证
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add *.md
-          git commit -m "Add file $(date '+%Y-%m-%d_%H-%M-%S').md" || exit 0
-          git push origin main
+          git config --global user.name "github-actions[bot]"  # 设置提交的用户名
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"  # 设置提交的邮箱
+          git add *.md  # 将所有 .md 文件添加到 Git 暂存区
+          git commit -m "Add file $(date '+%Y-%m-%d_%H-%M-%S').md" || exit 0  # 提交更改，若无改动则退出
+          git push origin main  # 推送更改到 main 分支

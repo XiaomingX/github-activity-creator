@@ -1,23 +1,35 @@
-name: build
-on: [push, pull_request]
+name: build  # 定义 GitHub Actions 工作流的名称为 "build"
+on: [push, pull_request]  # 设置触发条件，当有 push 或 pull_request 时运行该工作流
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build:  # 定义一个名为 "build" 的任务
+    runs-on: ubuntu-latest  # 指定运行环境为最新版本的 Ubuntu
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]  
+        # 定义矩阵策略，指定多个 Python 版本，工作流将对每个版本分别运行
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4  
+        # 第一步：使用 GitHub Actions 官方 checkout 动作，拉取代码仓库内容
+
+      - name: Set up Python ${{ matrix.python-version }}  
+        # 第二步：根据矩阵中当前的 Python 版本设置 Python 环境
+        uses: actions/setup-python@v5  # 使用 setup-python 动作配置 Python 环境
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: pip install flake8
-      - name: Lint
+          python-version: ${{ matrix.python-version }}  
+          # 指定当前运行的 Python 版本，从矩阵中的 python-version 动态获取
+
+      - name: Install dependencies  
+        # 第三步：安装所需的 Python 依赖
+        run: pip install flake8  # 运行命令安装 flake8 静态代码检查工具
+
+      - name: Lint  
+        # 第四步：执行代码质量检查
         run: |
-          flake8 contribute.py
-          flake8 test_contribute.py
-      - name: Test for commits
+          flake8 contribute.py  # 检查文件 contribute.py 的代码质量
+          flake8 test_contribute.py  # 检查文件 test_contribute.py 的代码质量
+
+      - name: Test for commits  
+        # 第五步：运行单元测试，确保代码提交的功能正确
         run: |
-          python -m unittest test_contribute
+          python -m unittest test_contribute  # 使用 unittest 模块执行 test_contribute 测试文件中的测试用例
