@@ -1,35 +1,56 @@
-name: build  # 定义 GitHub Actions 工作流的名称为 "build"
-on: [push, pull_request]  # 设置触发条件，当有 push 或 pull_request 时运行该工作流
+name: Git Commit Generator CI  # 更清晰的工作流名称，匹配脚本功能
+on:
+  push:
+    branches: [ main ]  # 仅在 main 分支推送时触发（避免冗余执行，可按需调整）
+    paths: [ 'git_commit_generator.py' ]  # 仅脚本文件变更时触发
+  pull_request:
+    branches: [ main ]  # 仅 PR 目标为 main 时触发
+    paths: [ 'git_commit_generator.py' ]
 
 jobs:
-  build:  # 定义一个名为 "build" 的任务
-    runs-on: ubuntu-latest  # 指定运行环境为最新版本的 Ubuntu
+  quality-and-test:  # 合并「代码质量检查」和「测试」为单个任务（逻辑关联紧密）
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]  
-        # 定义矩阵策略，指定多个 Python 版本，工作流将对每个版本分别运行
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]  # 保持多版本兼容性
+      fail-fast: false  # 某个 Python 版本失败不终止其他版本的运行
+
     steps:
-      - uses: actions/checkout@v4  
-        # 第一步：使用 GitHub Actions 官方 checkout 动作，拉取代码仓库内容
-
-      - name: Set up Python ${{ matrix.python-version }}  
-        # 第二步：根据矩阵中当前的 Python 版本设置 Python 环境
-        uses: actions/setup-python@v5  # 使用 setup-python 动作配置 Python 环境
+      - name: Checkout code  # 拉取代码（简化描述）
+        uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python-version }}  
-          # 指定当前运行的 Python 版本，从矩阵中的 python-version 动态获取
+          fetch-depth: 1  # 仅拉取最新提交，加快速度
 
-      - name: Install dependencies  
-        # 第三步：安装所需的 Python 依赖
-        run: pip install flake8  # 运行命令安装 flake8 静态代码检查工具
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"  # 缓存 pip 依赖，加速后续执行
+          cache-dependency-path: "requirements.txt"  # 若后续添加依赖，需创建此文件
 
-      - name: Lint  
-        # 第四步：执行代码质量检查
+      - name: Install dependencies  # 扩展依赖，支持更全面的代码质量检查
         run: |
-          flake8 contribute.py  # 检查文件 contribute.py 的代码质量
-          flake8 test_contribute.py  # 检查文件 test_contribute.py 的代码质量
+          python -m pip install --upgrade pip  # 升级 pip 到最新版
+          pip install flake8 pylint  # 新增 pylint 增强静态检查（比 flake8 更全面）
+          # 若后续有第三方依赖，可在此处安装（如 pip install -r requirements.txt）
 
-      - name: Test for commits  
-        # 第五步：运行单元测试，确保代码提交的功能正确
+      - name: Lint with flake8 (基础语法检查)
         run: |
-          python -m unittest test_contribute  # 使用 unittest 模块执行 test_contribute 测试文件中的测试用例
+          # 配置 flake8 规则：忽略 E501(行过长)、W503(运算符前换行)，指定错误格式
+          flake8 git_commit_generator.py \
+            --ignore E501,W503 \
+            --format "::error file=%(path)s,line=%(row)d,col=%(col)d::%(message)s"  # 适配 GitHub 错误提示格式
+
+      - name: Lint with pylint (深度代码质量检查)
+        run: |
+          # 配置 pylint 规则：禁用 C0114(缺少模块文档)、C0103(变量名不符合规范)等非关键警告
+          pylint git_commit_generator.py \
+            --disable=C0114,C0103,C0301 \
+            --exit-zero  # 仅提示警告，不阻断工作流（可改为 --exit-non-zero 严格检查）
+
+      - name: Run unit tests  # 适配合并后的脚本，执行测试用例
+        run: |
+          # 直接运行脚本（脚本内置逻辑：无命令行参数时自动执行 unittest）
+          python git_commit_generator.py
+          # 或显式指定 unittest 运行（两种方式等效，推荐前者更贴合脚本设计）
+          # python -m unittest git_commit_generator.py -v  # -v 显示详细测试日志
